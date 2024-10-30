@@ -39,14 +39,7 @@
                 }
             },
             created() {
-                // Kiểm tra đường dẫn URL và xác định trang hiển thị
-                const path = window.location.pathname;
-                if (path === '/admin') {
-                    this.currentPage = 'admin'; // Nếu URL là /admin, hiển thị trang quản trị
-                } else {
-                    this.currentPage = 'home'; // Mặc định hiển thị trang chủ
-                    this.loadProducts(); // Tải sản phẩm từ Firestore
-                }
+                this.loadProducts(); // Tải sản phẩm từ Firestore
             },
             methods: {
                 async loadProducts() {
@@ -70,8 +63,19 @@
                         console.error("Lỗi khi thêm sản phẩm: ", error);
                     }
                 },
-                showPage(page) {
-                    this.currentPage = page;
+                checkAdminPage() {
+                    const path = window.location.pathname;
+                    if (path === '/admin') {
+                        this.currentPage = 'admin'; // Nếu URL là /admin, hiển thị trang quản trị
+                    }
+                }
+            },
+            watch: {
+                // Theo dõi thay đổi trong currentPage để xử lý đường dẫn
+                currentPage(newPage) {
+                    if (newPage === 'admin') {
+                        this.checkAdminPage();
+                    }
                 }
             }
         });
@@ -84,27 +88,26 @@
             <div class="collapse navbar-collapse">
                 <ul class="navbar-nav mr-auto">
                     <li class="nav-item active">
-                        <a class="nav-link" href="#" @click="showPage('home')">Trang Chủ</a>
+                        <a class="nav-link" href="#" @click="loadProducts">Trang Chủ</a>
                     </li>
                 </ul>
             </div>
         </nav>
 
         <div class="container mt-4">
-            <div v-if="currentPage === 'home'">
-                <h1>Danh Sách Sản Phẩm</h1>
-                <div v-if="loading">Đang tải...</div>
-                <div v-else>
-                    <div v-for="product in products" :key="product.id" class="card mb-3">
-                        <div class="card-body">
-                            <h5 class="card-title">{{ product.name }}</h5>
-                            <p class="card-text">{{ product.description }}</p>
-                            <p class="card-text"><strong>Giá: {{ product.price }} VND</strong></p>
-                        </div>
+            <h1>Danh Sách Sản Phẩm</h1>
+            <div v-if="loading">Đang tải...</div>
+            <div v-else>
+                <div v-for="product in products" :key="product.id" class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ product.name }}</h5>
+                        <p class="card-text">{{ product.description }}</p>
+                        <p class="card-text"><strong>Giá: {{ product.price }} VND</strong></p>
                     </div>
                 </div>
             </div>
 
+            <!-- Phần quản trị không hiển thị trong menu nhưng vẫn tồn tại trong mã -->
             <div v-if="currentPage === 'admin'">
                 <h1>Thêm Sản Phẩm</h1>
                 <form @submit.prevent="addProduct">
