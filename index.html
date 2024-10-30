@@ -42,7 +42,8 @@
                     email: '',
                     phone: '',
                     address: ''
-                }
+                },
+                showOrderPage: false // Biến để điều khiển hiển thị trang đặt hàng
             },
             created() {
                 this.loadProducts(); // Tải sản phẩm từ Firestore khi khởi tạo
@@ -83,14 +84,21 @@
                     const cart = localStorage.getItem('cart');
                     this.cart = cart ? JSON.parse(cart) : []; // Tải giỏ hàng từ localStorage
                 },
+                proceedToOrder() {
+                    this.showOrderPage = true; // Hiển thị trang đặt hàng
+                },
                 async placeOrder() {
                     try {
-                        const orderDetails = { ...this.order, products: this.cart }; // Lưu thông tin đơn hàng kèm giỏ hàng
+                        const orderDetails = {
+                            ...this.order,
+                            products: this.cart.map(item => item.name).join(', ') // Lưu tên sản phẩm vào Firestore
+                        };
                         await addDoc(collection(db, 'orders'), orderDetails);
                         alert('Đặt hàng thành công!');
                         this.order = { name: '', email: '', phone: '', address: '' }; // Reset form đặt hàng
                         this.cart = []; // Xóa giỏ hàng
                         localStorage.removeItem('cart'); // Xóa giỏ hàng từ localStorage
+                        this.showOrderPage = false; // Ẩn trang đặt hàng
                     } catch (error) {
                         console.error("Lỗi khi đặt hàng: ", error);
                     }
@@ -136,29 +144,31 @@
                         <button class="btn btn-danger" @click="removeFromCart(item.id)">Xóa</button>
                     </div>
                 </div>
-                <button class="btn btn-success mt-3" @click="placeOrder">Mua</button>
+                <button class="btn btn-success mt-3" @click="proceedToOrder">Mua</button>
             </div>
 
-            <h1 class="mt-5">Đặt Hàng</h1>
-            <form @submit.prevent="placeOrder">
-                <div class="form-group">
-                    <label for="customerName">Tên</label>
-                    <input type="text" class="form-control" id="customerName" v-model="order.name" required>
-                </div>
-                <div class="form-group">
-                    <label for="customerEmail">Email</label>
-                    <input type="email" class="form-control" id="customerEmail" v-model="order.email" required>
-                </div>
-                <div class="form-group">
-                    <label for="customerPhone">Số Điện Thoại</label>
-                    <input type="tel" class="form-control" id="customerPhone" v-model="order.phone" required>
-                </div>
-                <div class="form-group">
-                    <label for="customerAddress">Địa Chỉ</label>
-                    <input type="text" class="form-control" id="customerAddress" v-model="order.address" required>
-                </div>
-                <button type="submit" class="btn btn-success">Đặt Hàng</button>
-            </form>
+            <div v-if="showOrderPage">
+                <h1 class="mt-5">Đặt Hàng</h1>
+                <form @submit.prevent="placeOrder">
+                    <div class="form-group">
+                        <label for="customerName">Tên</label>
+                        <input type="text" class="form-control" id="customerName" v-model="order.name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="customerEmail">Email</label>
+                        <input type="email" class="form-control" id="customerEmail" v-model="order.email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="customerPhone">Số Điện Thoại</label>
+                        <input type="tel" class="form-control" id="customerPhone" v-model="order.phone" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="customerAddress">Địa Chỉ</label>
+                        <input type="text" class="form-control" id="customerAddress" v-model="order.address" required>
+                    </div>
+                    <button type="submit" class="btn btn-success">Đặt Hàng</button>
+                </form>
+            </div>
         </div>
     </div>
 </body>
