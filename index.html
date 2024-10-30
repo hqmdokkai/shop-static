@@ -75,15 +75,22 @@
                     localStorage.setItem('cart', JSON.stringify(this.cart)); // Lưu giỏ hàng vào localStorage
                     alert(`${product.name} đã được thêm vào giỏ hàng.`);
                 },
+                removeFromCart(productId) {
+                    this.cart = this.cart.filter(product => product.id !== productId);
+                    localStorage.setItem('cart', JSON.stringify(this.cart)); // Cập nhật giỏ hàng vào localStorage
+                },
                 loadCart() {
                     const cart = localStorage.getItem('cart');
                     this.cart = cart ? JSON.parse(cart) : []; // Tải giỏ hàng từ localStorage
                 },
                 async placeOrder() {
                     try {
-                        await addDoc(collection(db, 'orders'), this.order);
+                        const orderDetails = { ...this.order, products: this.cart }; // Lưu thông tin đơn hàng kèm giỏ hàng
+                        await addDoc(collection(db, 'orders'), orderDetails);
                         alert('Đặt hàng thành công!');
                         this.order = { name: '', email: '', phone: '', address: '' }; // Reset form đặt hàng
+                        this.cart = []; // Xóa giỏ hàng
+                        localStorage.removeItem('cart'); // Xóa giỏ hàng từ localStorage
                     } catch (error) {
                         console.error("Lỗi khi đặt hàng: ", error);
                     }
@@ -117,6 +124,19 @@
                         <button class="btn btn-primary" @click="addToCart(product)">Thêm vào giỏ hàng</button>
                     </div>
                 </div>
+            </div>
+
+            <h1 class="mt-5">Giỏ Hàng</h1>
+            <div v-if="cart.length === 0">Giỏ hàng của bạn đang trống.</div>
+            <div v-else>
+                <div v-for="item in cart" :key="item.id" class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ item.name }}</h5>
+                        <p class="card-text"><strong>Giá: {{ item.price }} VND</strong></p>
+                        <button class="btn btn-danger" @click="removeFromCart(item.id)">Xóa</button>
+                    </div>
+                </div>
+                <button class="btn btn-success mt-3" @click="placeOrder">Mua</button>
             </div>
 
             <h1 class="mt-5">Đặt Hàng</h1>
