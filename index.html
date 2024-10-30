@@ -31,15 +31,22 @@
             data: {
                 products: [],
                 loading: true,
-                currentPage: 'home', // Mặc định là trang chủ
                 newProduct: {
                     name: '',
                     description: '',
                     price: null
+                },
+                cart: [],
+                order: {
+                    name: '',
+                    email: '',
+                    phone: '',
+                    address: ''
                 }
             },
             created() {
-                this.loadProducts(); // Tải sản phẩm từ Firestore
+                this.loadProducts(); // Tải sản phẩm từ Firestore khi khởi tạo
+                this.loadCart(); // Tải giỏ hàng từ localStorage
             },
             methods: {
                 async loadProducts() {
@@ -63,18 +70,22 @@
                         console.error("Lỗi khi thêm sản phẩm: ", error);
                     }
                 },
-                checkAdminPage() {
-                    const path = window.location.pathname;
-                    if (path === '/admin') {
-                        this.currentPage = 'admin'; // Nếu URL là /admin, hiển thị trang quản trị
-                    }
-                }
-            },
-            watch: {
-                // Theo dõi thay đổi trong currentPage để xử lý đường dẫn
-                currentPage(newPage) {
-                    if (newPage === 'admin') {
-                        this.checkAdminPage();
+                addToCart(product) {
+                    this.cart.push(product);
+                    localStorage.setItem('cart', JSON.stringify(this.cart)); // Lưu giỏ hàng vào localStorage
+                    alert(`${product.name} đã được thêm vào giỏ hàng.`);
+                },
+                loadCart() {
+                    const cart = localStorage.getItem('cart');
+                    this.cart = cart ? JSON.parse(cart) : []; // Tải giỏ hàng từ localStorage
+                },
+                async placeOrder() {
+                    try {
+                        await addDoc(collection(db, 'orders'), this.order);
+                        alert('Đặt hàng thành công!');
+                        this.order = { name: '', email: '', phone: '', address: '' }; // Reset form đặt hàng
+                    } catch (error) {
+                        console.error("Lỗi khi đặt hàng: ", error);
                     }
                 }
             }
@@ -103,29 +114,31 @@
                         <h5 class="card-title">{{ product.name }}</h5>
                         <p class="card-text">{{ product.description }}</p>
                         <p class="card-text"><strong>Giá: {{ product.price }} VND</strong></p>
+                        <button class="btn btn-primary" @click="addToCart(product)">Thêm vào giỏ hàng</button>
                     </div>
                 </div>
             </div>
 
-            <!-- Phần quản trị không hiển thị trong menu nhưng vẫn tồn tại trong mã -->
-            <div v-if="currentPage === 'admin'">
-                <h1>Thêm Sản Phẩm</h1>
-                <form @submit.prevent="addProduct">
-                    <div class="form-group">
-                        <label for="productName">Tên sản phẩm</label>
-                        <input type="text" class="form-control" id="productName" v-model="newProduct.name" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="productDescription">Mô tả sản phẩm</label>
-                        <textarea class="form-control" id="productDescription" v-model="newProduct.description" required></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="productPrice">Giá sản phẩm</label>
-                        <input type="number" class="form-control" id="productPrice" v-model="newProduct.price" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Thêm Sản Phẩm</button>
-                </form>
-            </div>
+            <h1 class="mt-5">Đặt Hàng</h1>
+            <form @submit.prevent="placeOrder">
+                <div class="form-group">
+                    <label for="customerName">Tên</label>
+                    <input type="text" class="form-control" id="customerName" v-model="order.name" required>
+                </div>
+                <div class="form-group">
+                    <label for="customerEmail">Email</label>
+                    <input type="email" class="form-control" id="customerEmail" v-model="order.email" required>
+                </div>
+                <div class="form-group">
+                    <label for="customerPhone">Số Điện Thoại</label>
+                    <input type="tel" class="form-control" id="customerPhone" v-model="order.phone" required>
+                </div>
+                <div class="form-group">
+                    <label for="customerAddress">Địa Chỉ</label>
+                    <input type="text" class="form-control" id="customerAddress" v-model="order.address" required>
+                </div>
+                <button type="submit" class="btn btn-success">Đặt Hàng</button>
+            </form>
         </div>
     </div>
 </body>
