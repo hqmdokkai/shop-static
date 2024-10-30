@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trang Web Sản Phẩm với Vue.js và Firestore</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+    <script type="module">
+        // Nhập Firebase từ CDN
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+        // Cấu hình Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBdIOnHaVjokwDzsFtsFj3KFKVDGZ6sXdo",
+            authDomain: "shop-static.firebaseapp.com",
+            projectId: "shop-static",
+            storageBucket: "shop-static.appspot.com",
+            messagingSenderId: "429842243826",
+            appId: "1:429842243826:web:7ccf4bb246c1df50a4b06b"
+        };
+
+        // Khởi tạo Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Khởi tạo ứng dụng Vue
+        new Vue({
+            el: '#app',
+            data: {
+                products: [],
+                loading: true,
+                newProduct: {
+                    name: '',
+                    description: '',
+                    price: null
+                }
+            },
+            created() {
+                this.loadProducts(); // Tải sản phẩm từ Firestore khi khởi tạo
+            },
+            methods: {
+                async loadProducts() {
+                    try {
+                        const querySnapshot = await getDocs(collection(db, 'products'));
+                        querySnapshot.forEach(doc => {
+                            this.products.push({ id: doc.id, ...doc.data() });
+                        });
+                    } catch (error) {
+                        console.error("Lỗi khi tải sản phẩm: ", error);
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+                async addProduct() {
+                    try {
+                        const docRef = await addDoc(collection(db, 'products'), this.newProduct);
+                        this.products.push({ id: docRef.id, ...this.newProduct });
+                        this.newProduct = { name: '', description: '', price: null }; // Reset form
+                    } catch (error) {
+                        console.error("Lỗi khi thêm sản phẩm: ", error);
+                    }
+                }
+            }
+        });
+    </script>
+</head>
+<body>
+    <div id="app">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <a class="navbar-brand" href="#">Sản Phẩm</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="#" @click="loadProducts">Trang Chủ</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <div class="container mt-4">
+            <h1>Danh Sách Sản Phẩm</h1>
+            <div v-if="loading">Đang tải...</div>
+            <div v-else>
+                <div v-for="product in products" :key="product.id" class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ product.name }}</h5>
+                        <p class="card-text">{{ product.description }}</p>
+                        <p class="card-text"><strong>Giá: {{ product.price }} VND</strong></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hiển thị phần quản trị để thêm sản phẩm -->
+            <h1>Thêm Sản Phẩm</h1>
+            <form @submit.prevent="addProduct">
+                <div class="form-group">
+                    <label for="productName">Tên sản phẩm</label>
+                    <input type="text" class="form-control" id="productName" v-model="newProduct.name" required>
+                </div>
+                <div class="form-group">
+                    <label for="productDescription">Mô tả sản phẩm</label>
+                    <textarea class="form-control" id="productDescription" v-model="newProduct.description" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="productPrice">Giá sản phẩm</label>
+                    <input type="number" class="form-control" id="productPrice" v-model="newProduct.price" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Thêm Sản Phẩm</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
