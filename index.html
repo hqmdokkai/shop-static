@@ -18,6 +18,9 @@
                     <li class="nav-item active">
                         <a class="nav-link" href="#" @click="showPage('home')">Trang Chủ</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" @click="showPage('admin')">Quản Trị</a>
+                    </li>
                 </ul>
             </div>
         </nav>
@@ -37,7 +40,6 @@
                 </div>
             </div>
 
-            <!-- Phần quản trị chỉ hiển thị khi URL là /admin -->
             <div v-if="currentPage === 'admin'">
                 <h1>Thêm Sản Phẩm</h1>
                 <form @submit.prevent="addProduct">
@@ -121,6 +123,10 @@
                 },
                 showPage(page) {
                     this.currentPage = page;
+                    // Nếu chuyển đến trang admin, không tải sản phẩm
+                    if (page === 'home') {
+                        this.loadProducts();
+                    }
                 }
             }
         });
