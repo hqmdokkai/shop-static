@@ -30,7 +30,9 @@
             el: '#app',
             data: {
                 products: [],
-                loading: true,
+                orders: [],
+                loadingProducts: true,
+                loadingOrders: true,
                 newProduct: {
                     name: '',
                     description: '',
@@ -39,6 +41,7 @@
             },
             created() {
                 this.loadProducts(); // Tải sản phẩm từ Firestore khi khởi tạo
+                this.loadOrders(); // Tải đơn hàng từ Firestore khi khởi tạo
             },
             methods: {
                 async loadProducts() {
@@ -50,7 +53,19 @@
                     } catch (error) {
                         console.error("Lỗi khi tải sản phẩm: ", error);
                     } finally {
-                        this.loading = false;
+                        this.loadingProducts = false;
+                    }
+                },
+                async loadOrders() {
+                    try {
+                        const querySnapshot = await getDocs(collection(db, 'orders'));
+                        querySnapshot.forEach(doc => {
+                            this.orders.push({ id: doc.id, ...doc.data() });
+                        });
+                    } catch (error) {
+                        console.error("Lỗi khi tải đơn hàng: ", error);
+                    } finally {
+                        this.loadingOrders = false;
                     }
                 },
                 async addProduct() {
@@ -69,11 +84,14 @@
 <body>
     <div id="app">
         <nav class="navbar navbar-expand-lg navbar-light bg-light">
-            <a class="navbar-brand" href="#">Sản Phẩm</a>
+            <a class="navbar-brand" href="#">Quản Trị Sản Phẩm</a>
             <div class="collapse navbar-collapse">
                 <ul class="navbar-nav mr-auto">
                     <li class="nav-item active">
-                        <a class="nav-link" href="#" @click="loadProducts">Trang Chủ</a>
+                        <a class="nav-link" href="#" @click="loadProducts">Sản Phẩm</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" @click="loadOrders">Đơn Hàng</a>
                     </li>
                 </ul>
             </div>
@@ -81,7 +99,7 @@
 
         <div class="container mt-4">
             <h1>Danh Sách Sản Phẩm</h1>
-            <div v-if="loading">Đang tải...</div>
+            <div v-if="loadingProducts">Đang tải sản phẩm...</div>
             <div v-else>
                 <div v-for="product in products" :key="product.id" class="card mb-3">
                     <div class="card-body">
@@ -109,6 +127,21 @@
                 </div>
                 <button type="submit" class="btn btn-primary">Thêm Sản Phẩm</button>
             </form>
+
+            <!-- Hiển thị danh sách đơn hàng -->
+            <h1 class="mt-5">Danh Sách Đơn Hàng</h1>
+            <div v-if="loadingOrders">Đang tải đơn hàng...</div>
+            <div v-else>
+                <div v-for="order in orders" :key="order.id" class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Đơn hàng #{{ order.id }}</h5>
+                        <p class="card-text"><strong>Tên: </strong>{{ order.name }}</p>
+                        <p class="card-text"><strong>Email: </strong>{{ order.email }}</p>
+                        <p class="card-text"><strong>Số Điện Thoại: </strong>{{ order.phone }}</p>
+                        <p class="card-text"><strong>Địa Chỉ: </strong>{{ order.address }}</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </body>
